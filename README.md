@@ -1,7 +1,5 @@
 # 📋 Proyecto Forzados GoSoft - 
 
----
-
 ## 🚀 Requisitos Previos
 Antes de comenzar, asegúrate de tener instalados los siguientes programas:
 - ![Git](https://img.shields.io/badge/Git-F05032?style=flat&logo=git&logoColor=white) Git
