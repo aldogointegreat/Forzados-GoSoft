@@ -1,0 +1,1 @@
+# Este archivo hace que activeDirectory sea reconocido como un módulo de Python# Archivo para que Python reconozca este directorio como un módulo

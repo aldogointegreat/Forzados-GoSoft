@@ -1,0 +1,169 @@
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import React, { useContext, useEffect, useState, useMemo } from "react";
+import { RiArrowRightUpLine, RiSettingsLine, RiArchiveDrawerLine, RiBarChartFill, RiLineChartFill } from "react-icons/ri";
+import { FaUserFriends, FaHardHat, FaBorderAll } from "react-icons/fa";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { UiContext } from "@/context/SidebarContext";
+import { UiContextType } from "@/types/SidebarOpen";
+// import Image from "next/image";
+import useUserSession from "@/hooks/useSession";
+import { solicitantes, aprobadores, ejecutores, administradores } from "@/hooks/rolesPermitidos";
+
+const Sidebar: React.FC = () => {
+	const context = useContext(UiContext) as UiContextType;
+
+	if (!context) {
+		throw new Error("useAppContext debe ser usado dentro de un UiProvider");
+	}
+
+	const { open } = context;
+	const { user } = useUserSession();
+
+	const [activeToggle, setActiveToggle] = useState<string | null>(null);
+	const pathname = usePathname();
+
+	useEffect(() => {
+		setActiveToggle(pathname.split("/")[2] || null);
+	}, [pathname]);
+
+	const menuItems = useMemo(
+		() => [
+			{
+				id: "consultas",
+				label: "Consultas",
+				icon: <RiArchiveDrawerLine className="text-xl" />,
+				href: "/dashboard/consultas",
+				roles: [...administradores, ...solicitantes, ...aprobadores, ...ejecutores],
+			},
+			{
+				id: "generar-alta",
+				label: "Solicitud de Forzado",
+				icon: <RiArrowRightUpLine className="text-xl" />,
+				href: "/dashboard/solicitud-forzado",
+				roles: [...solicitantes, ...administradores],
+			},
+			{
+				id: "administrar-usuario",
+				label: "Administrar Usuarios",
+				icon: <FaUserFriends className="text-xl" />,
+				href: "/dashboard/administrar-usuario",
+				roles: [...administradores],
+			},
+			{
+				id: "administrar-parametros",
+				label: "Administrar Parametros",
+				icon: <RiSettingsLine className="text-xl" />,
+				href: "/dashboard/administrar-parametros",
+				roles: [...administradores],
+			},
+			{
+				id: "administrar-puestos",
+				label: "Administrar Puestos",
+				icon: <FaHardHat className="text-xl" />,
+				href: "/dashboard/administrar-puestos",
+				roles: [...administradores],
+			},
+			{
+				id: "tags-matriz-riesgo",
+				label: "Matriz de Riesgo por Tags",
+				icon: <FaBorderAll className="text-xl" />,
+				href: "/dashboard/tags-matriz-riesgo",
+				roles: [...administradores],
+			},
+			{
+				id: "estadisticas",
+				label: "Estadísticas",
+				icon: <RiLineChartFill className="text-xl" />,
+				href: "/dashboard/estadisticas",
+				roles: [...administradores, ...solicitantes, ...aprobadores, ...ejecutores],
+			},
+			{
+				id: "reporte-bi",
+				label: "Reporte BI",
+				icon: <RiBarChartFill className="text-xl" />,
+				href: "https://app.powerbi.com/reportEmbed?reportId=5ff4e868-ef2b-4e5a-8be4-9722bddbb45c&autoAuth=true&ctid=e9ca4c2c-ebe1-4c93-a6b0-8b9302f4d0c8",
+				target: "_blank", // Mantenemos target
+				rel: "noopener noreferrer", // Mantenemos rel
+				isExternal: true, // Agregamos una bandera para identificar que es un enlace externo
+				roles: [...administradores, ...solicitantes, ...aprobadores, ...ejecutores],
+			},
+		],
+		[]
+	);
+
+	const itemRolesIncludesUserRoles = (itemRoles: number[], userRoles: number[]) => {
+		return itemRoles.some((itemRole) => userRoles.includes(itemRole));
+	};
+
+	return (
+		<div className={`bg-[#001d39] border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out ${open ? "w-64" : "w-16"} h-screen z-40`}>
+			<div className={`p-1 text-center bg-white ${open ? "" : "px-2"}`}>
+				<div className="text-2xl font-bold flex items-center justify-center space-x-2">
+					{open ? (
+						<div className="flex items-center whitespace-nowrap text-start text-xl p-1">
+							<img src="/images/logo2.png" alt="Logo" />
+							{/* <p className="ml-2">GoldFields</p> */}
+						</div>
+					) : (
+						<div className="w-8 h-8 bg-[#001d39] rounded-full flex items-center justify-center">
+							<span className="text-white text-xs font-bold">GF</span>
+						</div>
+					)}
+				</div>
+			</div>
+			<nav className="flex-1 overflow-y-auto overflow-x-hidden">
+				<ul>
+					{menuItems
+						.filter((item) => user && itemRolesIncludesUserRoles(item.roles, Object.keys(user.roles).map(Number)))
+						.map((item) =>
+							item.isExternal ? (
+								// Para enlaces externos, usamos <a> directamente
+								<li key={item.id} className="relative group">
+									<a
+										href={item.href}
+										target={item.target}
+										rel={item.rel}
+										className={`flex items-center p-4 cursor-pointer text-white ${activeToggle === item.id ? "bg-[#133e6a] text-gray-100" : "hover:bg-[#00264d] hover:text-gray-200"} ${
+											open ? "" : "justify-center"
+										}`}
+									>
+										<span className="text-[#c8a064] transition-transform duration-200 group-hover:scale-110">{item.icon}</span>
+										{open && <span className="ml-3 text-sm font-medium whitespace-nowrap">{item.label}</span>}
+									</a>
+									{!open && (
+										<div className="fixed left-16 top-auto mt-[-1.25rem] px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+											{item.label}
+										</div>
+									)}
+								</li>
+							) : (
+								// Para enlaces internos, usamos Link
+								<li key={item.id} className="relative group">
+									<Link href={item.href}>
+										<div
+											className={`flex items-center p-4 cursor-pointer text-white ${activeToggle === item.id ? "bg-[#133e6a] text-gray-100" : "hover:bg-[#00264d] hover:text-gray-200"} ${
+												open ? "" : "justify-center"
+											}`}
+										>
+											<span className="text-[#c8a064] transition-transform duration-200 group-hover:scale-110">{item.icon}</span>
+											{open && <span className="ml-3 text-sm font-medium whitespace-nowrap">{item.label}</span>}
+										</div>
+									</Link>
+									{!open && (
+										<div className="fixed left-16 top-auto mt-[-1.25rem] px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+											{item.label}
+										</div>
+									)}
+								</li>
+							)
+						)}
+				</ul>
+			</nav>
+		</div>
+	);
+};
+
+export default Sidebar;
