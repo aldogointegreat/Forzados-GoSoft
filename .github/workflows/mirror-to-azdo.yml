@@ -7,11 +7,6 @@ on:
   delete:
   create:
 
-env:
-  AZ_ORG: GIGTeam
-  AZ_PROJECT: GIGDailyMeeting
-  AZ_REPO_ENC: Forzados%20GoSoft   # nombre del repo URL-encoded
-
 jobs:
   mirror:
     runs-on: ubuntu-latest
@@ -22,17 +17,29 @@ jobs:
           fetch-depth: 0
 
       - name: Mirror to Azure (strict 1:1)
-        shell: bash
+        env:
+          # URL del repo en ADO (la tuya)
+          AZ_URL_READONLY: https://dev.azure.com/GIGTeam/GIGDailyMeeting/_git/Forzados%20GoSoft
+          AZ_URL_WITH_AUTH: https://ado:${{ secrets.AZURE_DEVOPS_PAT }}@dev.azure.com/GIGTeam/GIGDailyMeeting/_git/Forzados%20GoSoft
         run: |
-          # 1) Remoto sin credenciales en la URL
-          git remote add azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
+          set -e
 
-          # 2) Cabecera Authorization (usuario vacío ":" + PAT) → evita problemas con emails con '@'
-          AUTH=$(printf ":%s" "${{ secrets.AZURE_DEVOPS_PAT }}" | base64)
-          git config http.https://dev.azure.com/.extraheader "AUTHORIZATION: Basic $AUTH"
+          # Opcional: mitigar issues de red en runners
+          git config http.version HTTP/1.1
+          git config http.postBuffer 524288000
 
-          # 3) Espejo exacto (todas las refs, forzado, incluye borrados)
-          git push azure --mirror
+          # Remoto limpio y agregado con PAT embebido (usuario 'ado' sin @)
+          git remote remove azure 2>/dev/null || true
+          git remote add azure "$AZ_URL_WITH_AUTH"
 
-          # 4) Limpieza de la cabecera
-          git config --unset-all http.https://dev.azure.com/.extraheader || true
+          # Reintentos simples por si hay flakiness
+          n=0
+          until [ $n -ge 3 ]; do
+            git push azure --mirror && break
+            n=$((n+1))
+            echo "Retry $n/3 in 5s..."
+            sleep 5
+          done
+
+          # Seguridad: quitar el token del remoto
+          git remote set-url azure "$AZ_URL_READONLY"
