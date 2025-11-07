@@ -1,4 +1,4 @@
-# 📋 Proyecto Forzados GoSoft - Gointegreat S.A.C.
+# 📋 Proyecto Forzados GoSoft - Gointegreat S.A.
 
 ## 🚀 Requisitos Previos
 Antes de comenzar, asegúrate de tener instalados los siguientes programas:
