@@ -10,26 +10,29 @@ on:
 env:
   AZ_ORG: GIGTeam
   AZ_PROJECT: GIGDailyMeeting
-  AZ_REPO: Forzados GoSoft          # nombre legible
-  AZ_REPO_ENC: Forzados%20GoSoft    # nombre URL-encoded para la URL
+  AZ_REPO_ENC: Forzados%20GoSoft   # nombre del repo URL-encoded
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (full history)
+      - name: Checkout full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Push branches & tags to Azure DevOps
+      - name: Mirror to Azure (strict 1:1)
+        shell: bash
         run: |
-          # Agrega remoto con credenciales (usuario + PAT)
-          git remote add azure "https://${{ secrets.AZURE_DEVOPS_USERNAME }}:${{ secrets.AZURE_DEVOPS_PAT }}@dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
+          # 1) Remoto sin credenciales en la URL
+          git remote add azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
 
-          # Espeja ramas y tags; --prune elimina refs borradas en GitHub
-          git push azure --all --prune
-          git push azure --tags --prune
+          # 2) Cabecera Authorization (usuario vacío ":" + PAT) → evita problemas con emails con '@'
+          AUTH=$(printf ":%s" "${{ secrets.AZURE_DEVOPS_PAT }}" | base64)
+          git config http.https://dev.azure.com/.extraheader "AUTHORIZATION: Basic $AUTH"
 
-          # Seguridad: limpiar el remoto para no dejar el token en el config
-          git remote set-url azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
+          # 3) Espejo exacto (todas las refs, forzado, incluye borrados)
+          git push azure --mirror
+
+          # 4) Limpieza de la cabecera
+          git config --unset-all http.https://dev.azure.com/.extraheader || true
