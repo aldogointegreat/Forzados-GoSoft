@@ -3,14 +3,15 @@ name: Mirror to Azure DevOps
 on:
   push:
     branches: [ "**" ]
-  # opcional: espeja tags cuando se creen/borren
-  create:
+    tags:     [ "**" ]
   delete:
+  create:
 
 env:
-  AZ_ORG: GOINTEGREAT          # <- tu organización en ADO (p.ej. GOINTEGREAT)
-  AZ_PROJECT: Forzados GoSoft  # <- tu proyecto en ADO (p.ej. Forzados)
-  AZ_REPO: Forzados GoSoft        # <- tu repo en ADO (p.ej. Forzados-GoSoft)
+  AZ_ORG: GIGTeam
+  AZ_PROJECT: GIGDailyMeeting
+  AZ_REPO: Forzados GoSoft          # nombre legible
+  AZ_REPO_ENC: Forzados%20GoSoft    # nombre URL-encoded para la URL
 
 jobs:
   mirror:
@@ -23,12 +24,12 @@ jobs:
 
       - name: Push branches & tags to Azure DevOps
         run: |
-          # agrega remoto con credenciales (usuario + PAT)
-          git remote add azure "https://${{ secrets.AZURE_DEVOPS_USERNAME }}:${{ secrets.AZURE_DEVOPS_PAT }}@dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO}"
+          # Agrega remoto con credenciales (usuario + PAT)
+          git remote add azure "https://${{ secrets.AZURE_DEVOPS_USERNAME }}:${{ secrets.AZURE_DEVOPS_PAT }}@dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
 
-          # sube todas las ramas y tags (con prune para borrar refs eliminadas en GitHub)
+          # Espeja ramas y tags; --prune elimina refs borradas en GitHub
           git push azure --all --prune
           git push azure --tags --prune
 
-          # seguridad: limpia el remoto para no dejar el token en el config
-          git remote set-url azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO}"
+          # Seguridad: limpiar el remoto para no dejar el token en el config
+          git remote set-url azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO_ENC}"
