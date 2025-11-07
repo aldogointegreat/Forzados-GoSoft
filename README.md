@@ -1,4 +1,4 @@
-# 📋 Proyecto Forzados GoSoft - 
+# 📋 Proyecto Forzados GoSoft - Gointegreat S.A.C.
 
 ## 🚀 Requisitos Previos
 Antes de comenzar, asegúrate de tener instalados los siguientes programas:
@@ -6,8 +6,6 @@ Antes de comenzar, asegúrate de tener instalados los siguientes programas:
 - ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white) Node.js (versión recomendada: 18.x o superior)
 - ![PNPM](https://img.shields.io/badge/PNPM-F69220?style=flat&logo=pnpm&logoColor=white) PNPM (gestor de paquetes)
 - ![SQL](https://img.shields.io/badge/SQL-4479A1?style=flat&logo=postgresql&logoColor=white) Acceso a una base de datos compatible con el script SQL proporcionado
-
----
 
 ## 📥 Pasos para el Despliegue
 
