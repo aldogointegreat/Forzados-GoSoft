@@ -1,0 +1,34 @@
+name: Mirror to Azure DevOps
+
+on:
+  push:
+    branches: [ "**" ]
+  # opcional: espeja tags cuando se creen/borren
+  create:
+  delete:
+
+env:
+  AZ_ORG: GOINTEGREAT          # <- tu organización en ADO (p.ej. GOINTEGREAT)
+  AZ_PROJECT: Forzados GoSoft  # <- tu proyecto en ADO (p.ej. Forzados)
+  AZ_REPO: Forzados GoSoft        # <- tu repo en ADO (p.ej. Forzados-GoSoft)
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push branches & tags to Azure DevOps
+        run: |
+          # agrega remoto con credenciales (usuario + PAT)
+          git remote add azure "https://${{ secrets.AZURE_DEVOPS_USERNAME }}:${{ secrets.AZURE_DEVOPS_PAT }}@dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO}"
+
+          # sube todas las ramas y tags (con prune para borrar refs eliminadas en GitHub)
+          git push azure --all --prune
+          git push azure --tags --prune
+
+          # seguridad: limpia el remoto para no dejar el token en el config
+          git remote set-url azure "https://dev.azure.com/${AZ_ORG}/${AZ_PROJECT}/_git/${AZ_REPO}"
